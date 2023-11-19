@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from sqlalchemy.orm import Session
 from celery import Celery
 
-from app.api.vk_api import *
+from app.api.external_api_calls import *
 from ..worker import generate_pdf_report_async
 from ..utils import *
 from ..database import get_db
@@ -14,15 +14,6 @@ from .. import models, schemas
 
 load_dotenv()
 
-
-
-# celery = Celery(__name__)
-# celery.conf.broker_url = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379")
-# celery.conf.result_backend = os.environ.get("CELERY_RESULT_BACKEND", "redis://localhost:6379")
-# celery = Celery('tasks', broker='redis://localhost:6379/0')
-# # celery.config_from_object('celeryconfig')
-# celery.conf.task_routes = {"app.routers.user.generate_pdf_report_async": "main-queue"}
-# celery.autodiscover_tasks()
 
 router =APIRouter(
     prefix='/users',
@@ -33,9 +24,6 @@ token =os.environ.get('VK_ACCESS_TOKEN')
 
 output_directory = os.environ.get('OUTPUT_DIRECTORY')
 
-# @celery.task
-# def generate_pdf_report_async(user_data, output_dir):
-#     return generate_pdf_report(user_data, output_dir)
 
 @router.get("/", response_model=List[schemas.UserOut])
 def get_users(db: Session = Depends(get_db)):
@@ -52,6 +40,7 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
     user_data = get_user_data_from_vk(user.id, token)
 
     generate_pdf_report_async(user_data, output_directory)
+
 
     # this is a workaround for excluding password in the response
     user={
@@ -76,3 +65,34 @@ def create_users(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
     return new_user
+
+# as i am unable to get apis keys for telegram and instagram, this is a shorter version just for the endpoint to be functional
+@router.put("/connect_user/{user_id}", status_code=status.HTTP_200_OK)
+def connect_user(user_id: int, updated_user: schemas.UserBase, db: Session = Depends(get_db)):
+    user_query = db.query(models.User).filter_by(id=user_id)
+    user = user_query.first()
+
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f'User with id: {user_id} was not found')
+    
+    user_query.update(updated_user.model_dump(), synchronize_session=False)
+    db.commit()
+
+    return {'data': user_query.first()}
+
+
+
+#@router.put("/connect_user/{user_id}", status_code=status.HTTP_200_OK)
+#def connect_user(user_id: int, updated_user: schemas.UserBase, db: Session = Depends(get_db)):
+#     existing_user = session.query(User).filter_by(id=user_id).first()
+#     if existing_user:
+#         telegram_user_info = get_telegram_user_info(telegram_user_id)
+
+#         existing_user.telegram_user_id = telegram_user_id
+#         existing_user.telegram_first_name = telegram_user_info.get('first_name', '')
+#         existing_user.telegram_last_name = telegram_user_info.get('last_name', '')
+
+#         session.commit()
+#     else:
+#         return {'error':f"User with ID {user_id} not found."}

@@ -30,7 +30,7 @@ def get_user_data_from_vk(user_id: int, access_token: str):
 
     except requests.RequestException as e:
         print(f"Error during VK API call: {e}")
-        return None
+        return {'error': f"Error during VK API call: {e}"}
     
 
 def get_user_followers(user_id: int, access_token: str):
@@ -55,7 +55,7 @@ def get_user_followers(user_id: int, access_token: str):
 
     except requests.RequestException as e:
         print(f"Error during VK groups API call: {e}")
-        return []
+        return {'error': f"Error during VK API call: {e}"}
 
 def get_user_subscriptions(user_id: int, access_token: str):
     api_url = "https://api.vk.com/method/users.getSubscriptions"
@@ -91,4 +91,20 @@ def get_user_subscriptions(user_id: int, access_token: str):
 
     except requests.RequestException as e:
         print(f"Error during VK subscriptions API call: {e}")
-        return []
+        return {'error': f"Error during VK API call: {e}"}
+
+
+
+
+#I run into issues when getting api keys for telegram and instagram.
+#for that reason, this is a simplified implementation just to handle requests
+
+def get_telegram_user_info(user_id):
+    # This  API endpoint doesn't work
+    response = requests.get(f'https://telegramapi.com/user/{user_id}')
+    return response.json()
+
+def get_instagram_user_info(username):
+    # This  API endpoint doesn't work
+    response = requests.get(f'https://instagramapi.com/user/{username}')
+    return response.json()

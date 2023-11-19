@@ -1,7 +1,7 @@
 from typing import List
 from fastapi import FastAPI
 
-from app.api.vk_api import *
+from app.api.external_api_calls import *
 from .routers import user
 from .utils import *
 from .database import engine

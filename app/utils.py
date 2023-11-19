@@ -11,7 +11,7 @@ def hash_password(password: str):
 def generate_pdf_report(user_data, output_dir):
     os.makedirs(output_dir, exist_ok=True)
 
-    file_name = f"{user_data['first_name']}-report.pdf"
+    file_name = f"{user_data['id']}-{user_data['first_name']}-report.pdf"
     file_path = os.path.join(output_dir, file_name)
 
     pdf = canvas.Canvas(file_path)
